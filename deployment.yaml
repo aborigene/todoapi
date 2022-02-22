@@ -1,0 +1,78 @@
+--- 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todoapi
+  annotations:
+    qqcoisa: "some value"
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: todoapi
+  template:
+    metadata: 
+      labels:
+        app: todoapi
+        app.kubernetes.io/name: todoapi
+        annotations:
+          "qqcoisa pod"
+    spec:
+      containers:
+      - name: todoapi
+        image: igoroschsimoes/todoapi:v0.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          protocol: TCP
+          containerPort: 5001
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: "metadata.name"
+        - name: DEPLOYMENT_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: "metadata.labels['deployment']"
+        - name: CONTAINER_IMAGE
+          value: "igoroschsimoes/todoapi:v0.1"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5001
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5001
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 15
+        resources:
+          limits:
+              cpu: 1000m
+              memory: 2048Mi
+          requests:
+              cpu: 500m
+              memory: 1024Mi
+--- 
+apiVersion: v1
+kind: Service
+metadata: 
+  name: todoapi
+spec: 
+  type: ClusterIP
+  ports: 
+  - name: http
+    port: 443
+    protocol: TCP
+    targetPort: 5001
+  selector: 
+    app: todoapi
